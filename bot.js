@@ -11,8 +11,8 @@ const holidays = require('./holidays.json');
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', // adjust if needed
-        headless: false
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
  
