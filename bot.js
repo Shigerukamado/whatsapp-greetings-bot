@@ -8,6 +8,23 @@ const csv = require('csv-parser');
 const cron = require('node-cron');
 const holidays = require('./holidays.json');
  
+
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+let qrImageData = null;
+
+app.get('/', (req, res) => {
+    if (qrImageData) {
+        res.send(`<html><body><h2>Scan this QR code with WhatsApp</h2><img src="${qrImageData}" /></body></html>`);
+    } else {
+        res.send('<html><body><h2>Bot is already connected or QR not ready yet. Refresh in a few seconds.</h2></body></html>');
+    }
+});
+
+app.listen(PORT, () => console.log(`QR server running on port ${PORT}`));
+
 // ----------------- Setup WhatsApp client -----------------
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -19,11 +36,11 @@ const client = new Client({
 
 // ----------------- QR Code -----------------
 client.on('qr', qr => {
-    console.log('Scan this QR code:');
-    qrcode.generate(qr, { small: true });
-    QRCode.toFile('./qr.png', qr, (err) => {
-        if (err) console.error('Failed to save QR image:', err);
-        else console.log('QR code saved as qr.png');
+    QRCode.toDataURL(qr, (err, url) => {
+        if (!err) {
+            qrImageData = url;
+            console.log('QR code ready — visit your Railway URL to scan it');
+        }
     });
 });
 
