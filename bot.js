@@ -2,6 +2,7 @@
  
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const QRCode = require('qrcode');
 const fs = require('fs');
 const csv = require('csv-parser');
 const cron = require('node-cron');
@@ -20,8 +21,12 @@ const client = new Client({
 client.on('qr', qr => {
     console.log('Scan this QR code:');
     qrcode.generate(qr, { small: true });
+    QRCode.toFile('./qr.png', qr, (err) => {
+        if (err) console.error('Failed to save QR image:', err);
+        else console.log('QR code saved as qr.png');
+    });
 });
- 
+
 // ----------------- Bot Ready -----------------
 client.on('ready', () => {
     console.log('✅ Bot is up and running!');
