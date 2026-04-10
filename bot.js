@@ -54,10 +54,8 @@ client.on('ready', () => {
 const LOG_FILE = './sent-log.json';
 
 function getTodayKey() {
-    const today = new Date();
-    return today.toISOString().split('T')[0]; // e.g. "2026-04-10"
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
 }
-
 function getSentLog() {
     try {
         if (fs.existsSync(LOG_FILE)) {
@@ -118,12 +116,15 @@ function contactQualifiesForHoliday(person, holiday) {
 
 // ----------------- Function to check events -----------------
 function runEventCheck() {
-    const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayDate = `${month}-${day}`;
+    const lagosDate = new Date().toLocaleDateString('en-GB', {
+        timeZone: 'Africa/Lagos',
+        day: '2-digit',
+        month: '2-digit'
+    });
+    const [day, month] = lagosDate.split('/');
+   const todayDate = `${month}-${day}`;
 
-    console.log(`[INFO] Running event check for date: ${todayDate}`);
+console.log(`[INFO] Running event check for date: ${todayDate}`);
 
     const contacts = [];
     fs.createReadStream('contacts.csv')
@@ -202,9 +203,12 @@ function sendMessage(number, message) {
 // ----------------- Cron Scheduler -----------------
 // Runs every day at 12:00 AM Lagos time
 cron.schedule('0 0 * * *', () => {
-    const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    const lagosDate = new Date().toLocaleDateString('en-GB', {
+        timeZone: 'Africa/Lagos',
+        day: '2-digit',
+        month: '2-digit'
+    });
+    const [day, month] = lagosDate.split('/');
     const todayDate = `${month}-${day}`;
 
     const isHoliday = !!holidays[todayDate];
