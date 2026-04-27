@@ -541,12 +541,12 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // ----------------- Setup WhatsApp client -----------------
 const client = new Client({
-  authStrategy: new LocalAuth(),
-  puppeteer: {
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    protocolTimeout: 60000,
-  },
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        protocolTimeout: 120000
+    }
 });
 
 // ----------------- QR Code -----------------
