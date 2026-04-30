@@ -40,6 +40,11 @@ function getFullLagosDate() {
   });
 }
 
+// ----------------- Delay Helper -----------------
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // ----------------- Anti-Duplicate Log Helpers -----------------
 const LOG_FILE = "./sent-log.json";
 
@@ -114,7 +119,6 @@ async function getUpcomingEvents() {
       month: "long",
     });
 
-    // Check birthdays
     contacts.forEach((person) => {
       if ((person.birthday || "").trim() === dateKey) {
         events.push({
@@ -127,7 +131,6 @@ async function getUpcomingEvents() {
       }
     });
 
-    // Check holidays
     if (holidays[dateKey]) {
       const msg = holidays[dateKey].message || "";
       const title = msg
@@ -144,7 +147,6 @@ async function getUpcomingEvents() {
     }
   }
 
-  // Sort by days away and remove duplicates on same date
   return events.sort((a, b) => a.daysAway - b.daysAway);
 }
 
@@ -156,13 +158,11 @@ app.get("/", async (req, res) => {
   const todayDate = getLagosDate();
   const fullDate = getFullLagosDate();
 
-  // Map sent numbers to names
   const sentDetails = sentToday.map((num) => {
     const contact = contacts.find((c) => (c.number || "").trim() === num);
     return contact ? `${(contact.name || "").trim()} (${num})` : num;
   });
 
-  // Today's event label
   let todayEvent = "No special events today";
   if (holidays[todayDate]) {
     const msg = holidays[todayDate].message || "";
@@ -234,245 +234,53 @@ app.get("/", async (req, res) => {
 <meta http-equiv="refresh" content="30">
 <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-        --bg: #0a0f1e;
-        --surface: #111827;
-        --surface2: #1a2235;
-        --border: #1e2d45;
-        --accent: #25d366;
-        --accent2: #128c7e;
-        --text: #e8f0fe;
-        --text2: #8899bb;
-        --birthday: #f59e0b;
-        --holiday: #6366f1;
-        --female: #ec4899;
-        --male: #3b82f6;
+        --bg: #0a0f1e; --surface: #111827; --surface2: #1a2235;
+        --border: #1e2d45; --accent: #25d366; --accent2: #128c7e;
+        --text: #e8f0fe; --text2: #8899bb; --birthday: #f59e0b;
+        --holiday: #6366f1; --female: #ec4899; --male: #3b82f6;
     }
-
-    body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: 'Sora', sans-serif;
-        min-height: 100vh;
-        padding: 24px 16px;
-    }
-
-    .grid-bg {
-        position: fixed;
-        inset: 0;
-        background-image: 
-            linear-gradient(rgba(37,211,102,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(37,211,102,0.03) 1px, transparent 1px);
-        background-size: 40px 40px;
-        pointer-events: none;
-    }
-
-    .container {
-        max-width: 900px;
-        margin: 0 auto;
-        position: relative;
-    }
-
-    header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 32px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .logo {
-        width: 52px;
-        height: 52px;
-        background: linear-gradient(135deg, var(--accent), var(--accent2));
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 26px;
-        flex-shrink: 0;
-        box-shadow: 0 0 24px rgba(37,211,102,0.3);
-    }
-
-    .header-text h1 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-    }
-
-    .header-text p {
-        font-size: 0.8rem;
-        color: var(--text2);
-        font-family: 'JetBrains Mono', monospace;
-        margin-top: 2px;
-    }
-
-    .status-pill {
-        margin-left: auto;
-        padding: 8px 16px;
-        border-radius: 100px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        background: rgba(37,211,102,0.1);
-        border: 1px solid rgba(37,211,102,0.3);
-        color: ${statusColor};
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-
-    .stat-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 20px;
-        text-align: center;
-    }
-
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 700;
-        font-family: 'JetBrains Mono', monospace;
-        color: var(--accent);
-    }
-
-    .stat-label {
-        font-size: 0.75rem;
-        color: var(--text2);
-        margin-top: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .section {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 16px;
-    }
-
-    .section-title {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--text2);
-        margin-bottom: 16px;
-        font-family: 'JetBrains Mono', monospace;
-    }
-
-    .today-event {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--accent);
-        padding: 12px 16px;
-        background: rgba(37,211,102,0.08);
-        border-radius: 12px;
-        border-left: 3px solid var(--accent);
-    }
-
-    .sent-item {
-        padding: 10px 14px;
-        background: var(--surface2);
-        border-radius: 10px;
-        margin-bottom: 8px;
-        font-size: 0.85rem;
-        font-family: 'JetBrains Mono', monospace;
-        color: var(--accent);
-    }
-
-    .no-sent {
-        color: var(--text2);
-        font-size: 0.85rem;
-        font-style: italic;
-    }
-
-    .event-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 14px;
-        border-radius: 12px;
-        margin-bottom: 8px;
-        background: var(--surface2);
-        border-left: 3px solid var(--border);
-    }
-
+    body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; min-height: 100vh; padding: 24px 16px; }
+    .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(37,211,102,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37,211,102,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+    .container { max-width: 900px; margin: 0 auto; position: relative; }
+    header { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .logo { width: 52px; height: 52px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; box-shadow: 0 0 24px rgba(37,211,102,0.3); }
+    .header-text h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+    .header-text p { font-size: 0.8rem; color: var(--text2); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+    .status-pill { margin-left: auto; padding: 8px 16px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.3); color: ${statusColor}; font-family: 'JetBrains Mono', monospace; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; text-align: center; }
+    .stat-number { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+    .stat-label { font-size: 0.75rem; color: var(--text2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 16px; }
+    .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace; }
+    .today-event { font-size: 1rem; font-weight: 600; color: var(--accent); padding: 12px 16px; background: rgba(37,211,102,0.08); border-radius: 12px; border-left: 3px solid var(--accent); }
+    .sent-item { padding: 10px 14px; background: var(--surface2); border-radius: 10px; margin-bottom: 8px; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+    .no-sent { color: var(--text2); font-size: 0.85rem; font-style: italic; }
+    .event-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; margin-bottom: 8px; background: var(--surface2); border-left: 3px solid var(--border); }
     .event-item.birthday { border-left-color: var(--birthday); }
     .event-item.holiday { border-left-color: var(--holiday); }
-
-    .event-date {
-        font-size: 0.8rem;
-        color: var(--text2);
-        font-family: 'JetBrains Mono', monospace;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 140px;
-    }
-
+    .event-date { font-size: 0.8rem; color: var(--text2); font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px; min-width: 140px; }
     .event-label { font-size: 0.9rem; font-weight: 500; }
-
     .today-badge { background: var(--accent); color: #000; padding: 2px 8px; border-radius: 100px; font-size: 0.65rem; font-weight: 700; }
     .soon-badge { background: var(--birthday); color: #000; padding: 2px 8px; border-radius: 100px; font-size: 0.65rem; font-weight: 700; }
     .days-badge { background: var(--surface); color: var(--text2); padding: 2px 8px; border-radius: 100px; font-size: 0.65rem; border: 1px solid var(--border); }
-
-    .contact-item {
-        padding: 14px;
-        background: var(--surface2);
-        border-radius: 12px;
-        margin-bottom: 8px;
-    }
-
-    .contact-name {
-        font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 0.95rem;
-    }
-
+    .contact-item { padding: 14px; background: var(--surface2); border-radius: 12px; margin-bottom: 8px; }
+    .contact-name { font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; }
     .contact-details { display: flex; flex-wrap: wrap; gap: 6px; }
-
-    .tag {
-        padding: 3px 10px;
-        border-radius: 100px;
-        font-size: 0.72rem;
-        font-family: 'JetBrains Mono', monospace;
-        font-weight: 500;
-    }
-
+    .tag { padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; font-weight: 500; }
     .tag.group { background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
     .tag.female { background: rgba(236,72,153,0.15); color: #f472b6; border: 1px solid rgba(236,72,153,0.3); }
     .tag.male { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
     .tag.number { background: rgba(37,211,102,0.1); color: var(--accent); border: 1px solid rgba(37,211,102,0.2); }
     .tag.birthday { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
-
-    .refresh-note {
-        text-align: center;
-        font-size: 0.72rem;
-        color: var(--text2);
-        font-family: 'JetBrains Mono', monospace;
-        margin-top: 24px;
-        opacity: 0.6;
-    }
-
-    @media (max-width: 600px) {
-        .stats-row { grid-template-columns: repeat(2, 1fr); }
-        header { flex-wrap: wrap; }
-        .status-pill { margin-left: 0; }
-    }
+    .refresh-note { text-align: center; font-size: 0.72rem; color: var(--text2); font-family: 'JetBrains Mono', monospace; margin-top: 24px; opacity: 0.6; }
+    @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } header { flex-wrap: wrap; } .status-pill { margin-left: 0; } }
 </style>
 </head>
 <body>
 <div class="grid-bg"></div>
 <div class="container">
-
     <header>
         <div class="logo">📱</div>
         <div class="header-text">
@@ -481,42 +289,15 @@ app.get("/", async (req, res) => {
         </div>
         <div class="status-pill">${statusText}</div>
     </header>
-
     <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-number">${contacts.length}</div>
-            <div class="stat-label">Total Contacts</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">${sentToday.length}</div>
-            <div class="stat-label">Sent Today</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">${upcomingEvents.length}</div>
-            <div class="stat-label">Events (30d)</div>
-        </div>
+        <div class="stat-card"><div class="stat-number">${contacts.length}</div><div class="stat-label">Total Contacts</div></div>
+        <div class="stat-card"><div class="stat-number">${sentToday.length}</div><div class="stat-label">Sent Today</div></div>
+        <div class="stat-card"><div class="stat-number">${upcomingEvents.length}</div><div class="stat-label">Events (30d)</div></div>
     </div>
-
-    <div class="section">
-        <div class="section-title">Today's Event</div>
-        <div class="today-event">${todayEvent}</div>
-    </div>
-
-    <div class="section">
-        <div class="section-title">Messages Sent Today</div>
-        ${sentHTML}
-    </div>
-
-    <div class="section">
-        <div class="section-title">Upcoming Events (Next 30 Days)</div>
-        ${upcomingHTML || '<div class="no-sent">No events in the next 30 days</div>'}
-    </div>
-
-    <div class="section">
-        <div class="section-title">All Contacts (${contacts.length})</div>
-        ${contactsHTML}
-    </div>
-
+    <div class="section"><div class="section-title">Today's Event</div><div class="today-event">${todayEvent}</div></div>
+    <div class="section"><div class="section-title">Messages Sent Today</div>${sentHTML}</div>
+    <div class="section"><div class="section-title">Upcoming Events (Next 30 Days)</div>${upcomingHTML || '<div class="no-sent">No events in the next 30 days</div>'}</div>
+    <div class="section"><div class="section-title">All Contacts (${contacts.length})</div>${contactsHTML}</div>
     <div class="refresh-note">Auto-refreshes every 30 seconds • Built with ❤️</div>
 </div>
 </body>
@@ -531,9 +312,7 @@ app.get("/qr", (req, res) => {
             <img src="${qrImageData}" style="border-radius:16px;" />
         </body></html>`);
   } else {
-    res.send(
-      '<html><body style="background:#0a0f1e;color:white;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;"><h2>Bot is already connected! No QR needed.</h2></body></html>',
-    );
+    res.send('<html><body style="background:#0a0f1e;color:white;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;"><h2>Bot is already connected! No QR needed.</h2></body></html>');
   }
 });
 
@@ -541,12 +320,12 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // ----------------- Setup WhatsApp client -----------------
 const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        protocolTimeout: 120000
-    }
+  authStrategy: new LocalAuth(),
+  puppeteer: {
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    protocolTimeout: 120000,
+  },
 });
 
 // ----------------- QR Code -----------------
@@ -587,127 +366,101 @@ function contactQualifiesForHoliday(person, holiday) {
   if (holiday.groups && holiday.groups.length > 0) {
     const holidayGroups = holiday.groups.map((g) => g.trim().toLowerCase());
     if (holidayGroups.includes("everyone")) return true;
-    const hasMatchingGroup = personGroups.some((g) =>
-      holidayGroups.includes(g),
-    );
+    const hasMatchingGroup = personGroups.some((g) => holidayGroups.includes(g));
     if (!hasMatchingGroup) return false;
   }
 
   return true;
 }
 
-// ----------------- Function to check events -----------------
-function runEventCheck() {
-  const todayDate = getLagosDate();
-  console.log(`[INFO] Running event check for date: ${todayDate}`);
-
-  const contacts = [];
-  fs.createReadStream("contacts.csv")
-    .pipe(csv())
-    .on("data", (data) => contacts.push(data))
-    .on("end", () => {
-      if (contacts.length === 0) {
-        console.log("[WARN] No contacts found in contacts.csv");
-        return;
-      }
-
-      let sentCount = 0;
-
-      contacts.forEach((person) => {
-        const name = (person.name || "").trim();
-        const number = (person.number || "").trim();
-        const birthday = (person.birthday || "").trim();
-        const customMessage = (person.custom_message || "").trim();
-
-        if (!number) {
-          console.log(`[WARN] Skipping contact "${name}" — no phone number`);
-          return;
-        }
-
-        if (hasBeenSentToday(number)) {
-          console.log(`[SKIP] Already messaged ${name} today. Skipping.`);
-          return;
-        }
-
-        let message = null;
-
-        if (birthday === todayDate) {
-          message =
-            customMessage ||
-            `🎂 Happy Birthday ${name}! Wishing you blessings and joy today and always! 🙏`;
-        } else if (holidays[todayDate]) {
-          const holiday = holidays[todayDate];
-          if (contactQualifiesForHoliday(person, holiday)) {
-            message = holiday.message;
-          } else {
-            console.log(
-              `[SKIP] ${name} does not qualify for today's holiday (group/gender filter)`,
-            );
-          }
-        }
-
-        if (message) {
-          sendMessage(number, message);
-          markAsSent(number);
-          sentCount++;
-          console.log(`[✅ SENT] To ${name} (${number})`);
-        }
-      });
-
-      console.log(
-        `[INFO] Event check complete. Messaged ${sentCount} contact(s).`,
-      );
-    })
-    .on("error", (err) => {
-      console.error("[ERROR] Failed to read contacts.csv:", err.message);
-    });
-}
-
 // ----------------- Send Message Helper -----------------
 function sendMessage(number, message) {
   const chatId = number.replace(/\D/g, "") + "@c.us";
-  client
+  return client
     .sendMessage(chatId, message)
     .then(() => console.log(`[INFO] Message delivered to ${chatId}`))
     .catch((err) =>
-      console.error(`[ERROR] Failed to send to ${chatId}:`, err.message),
+      console.error(`[ERROR] Failed to send to ${chatId}:`, err.message)
     );
+}
+
+// ----------------- Function to check events -----------------
+async function runEventCheck() {
+  const todayDate = getLagosDate();
+  console.log(`[INFO] Running event check for date: ${todayDate}`);
+
+  const contacts = await loadContacts();
+
+  if (contacts.length === 0) {
+    console.log("[WARN] No contacts found in contacts.csv");
+    return;
+  }
+
+  let sentCount = 0;
+
+  for (const person of contacts) {
+    const name = (person.name || "").trim();
+    const number = (person.number || "").trim();
+    const birthday = (person.birthday || "").trim();
+    const customMessage = (person.custom_message || "").trim();
+
+    if (!number) {
+      console.log(`[WARN] Skipping contact "${name}" — no phone number`);
+      continue;
+    }
+
+    if (hasBeenSentToday(number)) {
+      console.log(`[SKIP] Already messaged ${name} today. Skipping.`);
+      continue;
+    }
+
+    let message = null;
+
+    if (birthday === todayDate) {
+      message =
+        customMessage ||
+        `🎂 Happy Birthday ${name}! Wishing you blessings and joy today and always! 🙏`;
+    } else if (holidays[todayDate]) {
+      const holiday = holidays[todayDate];
+      if (contactQualifiesForHoliday(person, holiday)) {
+        message = holiday.message;
+      } else {
+        console.log(`[SKIP] ${name} does not qualify for today's holiday (group/gender filter)`);
+      }
+    }
+
+    if (message) {
+      await sendMessage(number, message);
+      markAsSent(number);
+      sentCount++;
+      console.log(`[✅ SENT] To ${name} (${number})`);
+      await delay(4000); // wait 4 seconds between each message
+    }
+  }
+
+  console.log(`[INFO] Event check complete. Messaged ${sentCount} contact(s).`);
 }
 
 // ----------------- Cron Scheduler -----------------
 // Runs every day at 12:00 AM Lagos time
 cron.schedule(
   "0 0 * * *",
-  () => {
+  async () => {
     const todayDate = getLagosDate();
     const isHoliday = !!holidays[todayDate];
+    const contacts = await loadContacts();
+    const isSomeoneBirthday = contacts.some(
+      (p) => (p.birthday || "").trim() === todayDate
+    );
 
-    const contacts = [];
-    fs.createReadStream("contacts.csv")
-      .pipe(csv())
-      .on("data", (data) => contacts.push(data))
-      .on("end", () => {
-        const isSomeoneBirthday = contacts.some(
-          (p) => (p.birthday || "").trim() === todayDate,
-        );
-
-        if (isHoliday || isSomeoneBirthday) {
-          console.log(
-            `[CRON] Relevant day detected (${todayDate}). Running event check...`,
-          );
-          runEventCheck();
-        } else {
-          console.log(`[CRON] No events today (${todayDate}). Skipping.`);
-        }
-      })
-      .on("error", (err) => {
-        console.error(
-          "[ERROR] Could not read contacts.csv in scheduler:",
-          err.message,
-        );
-      });
+    if (isHoliday || isSomeoneBirthday) {
+      console.log(`[CRON] Relevant day detected (${todayDate}). Running event check...`);
+      runEventCheck();
+    } else {
+      console.log(`[CRON] No events today (${todayDate}). Skipping.`);
+    }
   },
-  { timezone: "Africa/Lagos" },
+  { timezone: "Africa/Lagos" }
 );
 
 // ----------------- Initialize client -----------------
