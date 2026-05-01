@@ -105,7 +105,7 @@ async function getUpcomingEvents() {
   const contacts = await loadContacts();
   const events = [];
   const today = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" }),
+    new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" })
   );
 
   for (let i = 0; i <= 30; i++) {
@@ -172,40 +172,25 @@ app.get("/", async (req, res) => {
       .trim();
   }
   const birthdaysToday = contacts.filter(
-    (c) => (c.birthday || "").trim() === todayDate,
+    (c) => (c.birthday || "").trim() === todayDate
   );
   if (birthdaysToday.length > 0) {
     todayEvent = `🎂 ${birthdaysToday.map((c) => (c.name || "").trim()).join(", ")}'s Birthday`;
   }
 
   const statusColor =
-    botStatus === "connected"
-      ? "#22c55e"
-      : botStatus === "connecting"
-        ? "#f59e0b"
-        : "#ef4444";
+    botStatus === "connected" ? "#22c55e" : botStatus === "connecting" ? "#f59e0b" : "#ef4444";
   const statusText =
-    botStatus === "connected"
-      ? "✅ Connected"
-      : botStatus === "connecting"
-        ? "⏳ Connecting..."
-        : "❌ Disconnected";
+    botStatus === "connected" ? "✅ Connected" : botStatus === "connecting" ? "⏳ Connecting..." : "❌ Disconnected";
 
-  const upcomingHTML = upcomingEvents
-    .slice(0, 10)
-    .map(
-      (e) => `
+  const upcomingHTML = upcomingEvents.slice(0, 10).map((e) => `
         <div class="event-item ${e.type}">
             <div class="event-date">${e.date} ${e.daysAway === 0 ? '<span class="today-badge">TODAY</span>' : e.daysAway === 1 ? '<span class="soon-badge">TOMORROW</span>' : `<span class="days-badge">${e.daysAway}d</span>`}</div>
             <div class="event-label">${e.label}</div>
         </div>
-    `,
-    )
-    .join("");
+    `).join("");
 
-  const contactsHTML = contacts
-    .map(
-      (c) => `
+  const contactsHTML = contacts.map((c) => `
         <div class="contact-item">
             <div class="contact-name">${(c.name || "").trim()}</div>
             <div class="contact-details">
@@ -215,14 +200,11 @@ app.get("/", async (req, res) => {
                 ${(c.birthday || "").trim() ? `<span class="tag birthday">🎂 ${(c.birthday || "").trim()}</span>` : ""}
             </div>
         </div>
-    `,
-    )
-    .join("");
+    `).join("");
 
-  const sentHTML =
-    sentDetails.length > 0
-      ? sentDetails.map((s) => `<div class="sent-item">✅ ${s}</div>`).join("")
-      : '<div class="no-sent">No messages sent yet today</div>';
+  const sentHTML = sentDetails.length > 0
+    ? sentDetails.map((s) => `<div class="sent-item">✅ ${s}</div>`).join("")
+    : '<div class="no-sent">No messages sent yet today</div>';
 
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -234,12 +216,7 @@ app.get("/", async (req, res) => {
 <meta http-equiv="refresh" content="30">
 <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-        --bg: #0a0f1e; --surface: #111827; --surface2: #1a2235;
-        --border: #1e2d45; --accent: #25d366; --accent2: #128c7e;
-        --text: #e8f0fe; --text2: #8899bb; --birthday: #f59e0b;
-        --holiday: #6366f1; --female: #ec4899; --male: #3b82f6;
-    }
+    :root { --bg: #0a0f1e; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #25d366; --accent2: #128c7e; --text: #e8f0fe; --text2: #8899bb; --birthday: #f59e0b; --holiday: #6366f1; --female: #ec4899; --male: #3b82f6; }
     body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; min-height: 100vh; padding: 24px 16px; }
     .grid-bg { position: fixed; inset: 0; background-image: linear-gradient(rgba(37,211,102,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37,211,102,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
     .container { max-width: 900px; margin: 0 auto; position: relative; }
@@ -283,10 +260,7 @@ app.get("/", async (req, res) => {
 <div class="container">
     <header>
         <div class="logo">📱</div>
-        <div class="header-text">
-            <h1>WhatsApp Bot</h1>
-            <p>${fullDate}</p>
-        </div>
+        <div class="header-text"><h1>WhatsApp Bot</h1><p>${fullDate}</p></div>
         <div class="status-pill">${statusText}</div>
     </header>
     <div class="stats-row">
@@ -340,10 +314,12 @@ client.on("qr", (qr) => {
 });
 
 // ----------------- Bot Ready -----------------
-client.on("ready", () => {
+client.on("ready", async () => {
   botStatus = "connected";
   qrImageData = null;
   console.log("✅ Bot is up and running!");
+  console.log("[INFO] Waiting 10 seconds for Chrome to stabilize...");
+  await delay(10000);
   runEventCheck();
 });
 
@@ -354,22 +330,17 @@ client.on("disconnected", () => {
 
 // ----------------- Helper: check if contact qualifies for a holiday -----------------
 function contactQualifiesForHoliday(person, holiday) {
-  const personGroups = (person.groups || "")
-    .split("|")
-    .map((g) => g.trim().toLowerCase());
+  const personGroups = (person.groups || "").split("|").map((g) => g.trim().toLowerCase());
   const personGender = (person.gender || "").trim().toLowerCase();
-
   if (holiday.gender) {
     if (personGender !== holiday.gender.toLowerCase()) return false;
   }
-
   if (holiday.groups && holiday.groups.length > 0) {
     const holidayGroups = holiday.groups.map((g) => g.trim().toLowerCase());
     if (holidayGroups.includes("everyone")) return true;
     const hasMatchingGroup = personGroups.some((g) => holidayGroups.includes(g));
     if (!hasMatchingGroup) return false;
   }
-
   return true;
 }
 
@@ -379,47 +350,35 @@ function sendMessage(number, message) {
   return client
     .sendMessage(chatId, message)
     .then(() => console.log(`[INFO] Message delivered to ${chatId}`))
-    .catch((err) =>
-      console.error(`[ERROR] Failed to send to ${chatId}:`, err.message)
-    );
+    .catch((err) => console.error(`[ERROR] Failed to send to ${chatId}:`, err.message));
 }
 
 // ----------------- Function to check events -----------------
 async function runEventCheck() {
   const todayDate = getLagosDate();
   console.log(`[INFO] Running event check for date: ${todayDate}`);
-
   const contacts = await loadContacts();
-
   if (contacts.length === 0) {
     console.log("[WARN] No contacts found in contacts.csv");
     return;
   }
-
   let sentCount = 0;
-
   for (const person of contacts) {
     const name = (person.name || "").trim();
     const number = (person.number || "").trim();
     const birthday = (person.birthday || "").trim();
     const customMessage = (person.custom_message || "").trim();
-
     if (!number) {
       console.log(`[WARN] Skipping contact "${name}" — no phone number`);
       continue;
     }
-
     if (hasBeenSentToday(number)) {
       console.log(`[SKIP] Already messaged ${name} today. Skipping.`);
       continue;
     }
-
     let message = null;
-
     if (birthday === todayDate) {
-      message =
-        customMessage ||
-        `🎂 Happy Birthday ${name}! Wishing you blessings and joy today and always! 🙏`;
+      message = customMessage || `🎂 Happy Birthday ${name}! Wishing you blessings and joy today and always! 🙏`;
     } else if (holidays[todayDate]) {
       const holiday = holidays[todayDate];
       if (contactQualifiesForHoliday(person, holiday)) {
@@ -428,31 +387,24 @@ async function runEventCheck() {
         console.log(`[SKIP] ${name} does not qualify for today's holiday (group/gender filter)`);
       }
     }
-
     if (message) {
+      await delay(3000);
       await sendMessage(number, message);
       markAsSent(number);
       sentCount++;
       console.log(`[✅ SENT] To ${name} (${number})`);
-      await delay(4000); // wait 4 seconds between each message
+      await delay(8000);
     }
   }
-
   console.log(`[INFO] Event check complete. Messaged ${sentCount} contact(s).`);
 }
 
 // ----------------- Cron Scheduler -----------------
-// Runs every day at 12:00 AM Lagos time
-cron.schedule(
-  "0 0 * * *",
-  async () => {
+cron.schedule("0 0 * * *", async () => {
     const todayDate = getLagosDate();
     const isHoliday = !!holidays[todayDate];
     const contacts = await loadContacts();
-    const isSomeoneBirthday = contacts.some(
-      (p) => (p.birthday || "").trim() === todayDate
-    );
-
+    const isSomeoneBirthday = contacts.some((p) => (p.birthday || "").trim() === todayDate);
     if (isHoliday || isSomeoneBirthday) {
       console.log(`[CRON] Relevant day detected (${todayDate}). Running event check...`);
       runEventCheck();
