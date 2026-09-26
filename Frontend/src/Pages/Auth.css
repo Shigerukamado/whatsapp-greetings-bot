@@ -1,0 +1,146 @@
+.auth {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.auth-brand {
+  background: var(--forest);
+  color: var(--paper);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2.5rem;
+}
+
+.auth-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.auth-brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+.auth-brand-mark a {
+  text-decoration: none;
+  color: var(--paper);
+}
+
+.auth-brand-quote h2 {
+  color: var(--paper);
+  font-size: 2rem;
+  max-width: 14ch;
+  line-height: 1.2;
+}
+
+.auth-brand-quote p {
+  margin-top: 1rem;
+  color: #b9c6bd;
+  max-width: 32ch;
+  font-size: 0.95rem;
+}
+
+.auth-brand-foot {
+  font-size: 0.82rem;
+  color: #8ea092;
+}
+
+.auth-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+}
+
+.auth-form {
+  width: 100%;
+  max-width: 360px;
+}
+
+.auth-form h1 {
+  font-size: 1.7rem;
+}
+
+.auth-form-sub {
+  margin-top: 0.5rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.auth-form-sub a {
+  color: var(--forest);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.field {
+  margin-top: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.field input {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.85rem;
+  font-size: 0.95rem;
+  font-family: var(--font-body);
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.field input:focus-visible {
+  border-color: var(--forest);
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 1.8rem;
+}
+
+@media (max-width: 780px) {
+  .auth {
+    grid-template-columns: 1fr;
+  }
+  .auth-brand {
+    display: none;
+  }
+}
+
+.field-password-wrap {
+  position: relative;
+}
+
+.field-password-wrap input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  color: var(--ink-soft);
+}
+
+.password-toggle:hover {
+  color: var(--forest);
+}

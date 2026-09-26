@@ -132,7 +132,6 @@ function Landing() {
                 </button>
                 </form>
                 </section>
-                
             <footer className="footer">
               <span>Kaabo</span>
               <span> Remember so you won't forget</span>
